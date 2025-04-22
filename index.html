@@ -307,8 +307,13 @@ const scoreStorage = {
     saveScore(scoreData) {
         const scores = this.getScores();
         const existingIndex = scores.findIndex(s => s.name === scoreData.name);
-        if (existingIndex !== -1) scores.splice(existingIndex, 1);
-        scores.push(scoreData);
+        
+        if (existingIndex === -1) {
+            scores.push(scoreData);
+        } else if (scoreData.score > scores[existingIndex].score) {
+            scores[existingIndex] = scoreData;
+        }
+        
         localStorage.setItem('examScores', JSON.stringify(scores));
     }
 };
