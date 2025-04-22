@@ -29,6 +29,14 @@
             margin: auto;
         }
 
+        #loading {
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-top: 20px;
+        }
+
         #container {
             background-color: white;
             padding: 15px;
@@ -121,9 +129,9 @@
         }
 
         .blank-input {
-            display: inline-block;
+            display: block;
             margin: 0 5px;
-            width: 90px;
+            width: 120px;
             border: none;
             border-bottom: 2px solid #666;
             padding: 5px 10px;
@@ -132,11 +140,16 @@
             background-color: transparent;
         }
 
+        .correct {
+            background-color: rgba(76, 175, 80, 0.1) !important;
+        }
+
         .correct-answer {
             color: #f44336;
-            font-size: 14px;
-            margin-left: 10px;
-            display: inline-block;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+            height: 18px;
         }
 
         #progress {
@@ -170,9 +183,6 @@
         #check-btn { background-color: #9C27B0; color: white; }
         #next-btn { background-color: #FF9800; color: white; display: none; }
         #finish-btn { background-color: #f44336; color: white; display: none; }
-
-        .correct { border-color: #666 !important; background-color: transparent !important; }
-        .wrong { border-color: #666 !important; background-color: transparent !important; }
 
         #result-page {
             text-align: center;
@@ -247,6 +257,7 @@
         <br>
         <button id="enter-btn">开始测评</button>
         <button id="rank-btn">排行榜</button>
+        <div id="loading">正在加载图片，请稍候...</div>
     </div>
 
     <div id="container">
@@ -375,6 +386,7 @@ let currentPage = 1;
 let totalScore = 0;
 let usedImages = [];
 let startTime = 0;
+let imageCache = {};
 
 function showZoomedImage() {
     const src = document.getElementById('question-image').src;
@@ -401,6 +413,27 @@ function initHomepage() {
     document.getElementById('rank-btn').addEventListener('click', showRanking);
 }
 
+function preloadImages() {
+    document.getElementById('enter-btn').disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    
+    const imageNames = Object.keys(questionBank);
+    let loadedCount = 0;
+    
+    imageNames.forEach(imageName => {
+        const img = new Image();
+        img.onload = function() {
+            imageCache[imageName] = img;
+            loadedCount++;
+            if(loadedCount === imageNames.length) {
+                document.getElementById('enter-btn').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        };
+        img.src = `images/${imageName}`;
+    });
+}
+
 function startTest() {
     currentStudent = document.getElementById('student-select').value;
     if (!currentStudent) return alert('请先选择学生');
@@ -423,7 +456,7 @@ function startTest() {
 function loadNewPage() {
     const currentImage = usedImages[currentPage-1];
     const img = document.getElementById('question-image');
-    img.src = `images/${currentImage}`;
+    img.src = imageCache[currentImage].src;
     
     createQuestions(questionBank[currentImage]);
     document.getElementById('progress').textContent = `第${currentPage}/3页`;
@@ -442,9 +475,9 @@ function createQuestions(questions) {
         questionDiv.innerHTML = `
             <div class="question-number">（${index + 1}）</div>
             ${q.answers.map(() => `
-                <div style="display: inline-block;">
-                    <input type="text" class="blank-input">
+                <div style="display: inline-block; vertical-align: top;">
                     <span class="correct-answer"></span>
+                    <input type="text" class="blank-input">
                 </div>
             `).join(' ')}
         `;
@@ -466,10 +499,13 @@ function checkAnswers() {
             const span = answerSpans[currentIndex];
             
             if (input.value.trim() === ans) {
+                input.classList.add('correct');
                 correctCount++;
                 span.textContent = '';
             } else {
+                input.classList.remove('correct');
                 span.textContent = ans;
+                span.style.color = '#f44336';
             }
             currentIndex++;
         });
@@ -533,7 +569,10 @@ function closeRanking() {
     document.getElementById('ranking-modal').style.display = 'none';
 }
 
-window.onload = initHomepage;
+window.onload = function() {
+    initHomepage();
+    preloadImages();
+};
 </script>
 </body>
 </html>
