@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
-    <title>机械制图填空测评系统</title>
+    <title>考证理论填空测评系统</title>
     <style>
         * {
             box-sizing: border-box;
@@ -53,11 +53,9 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #2196F3;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 18px;
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
             z-index: 1000;
         }
 
@@ -405,7 +403,14 @@ const questionBank = {
     ]
 };
 
-const studentList = ["张三","李四","王五","陈六"];
+const studentList = ["邱日强", "黄火明", "杨名驰", "朱立乾", "邱耀铭", "葛金鹏", "梁皓轩",
+                "郭恩瑞", "程剑豪", "罗远昊", "江柏冠", "卢宝增", "邓镇权", "黄庆飞",
+                "谢泽高", "冯麟斌", "卢子豪", "张超城", "黄析俊", "黄永霖", "李鼎",
+                "邓鸿镇", "黄培轩", "彭家乐", "黄新铧", "谢国永", "曾俊烽", "杨永建",
+                "陈继贤", "刘金灿", "袁乐清", "朱冠帆", "张广隆", "梁国亮", "梁燕辰",
+                "陈江南", "林浩宇", "蔡伟杰", "林松海", "吕仁才", "韦悦", "石江涛",
+                "宁颢然", "刘付煜毅", "梁志鑫", "赖兆霆", "张梓钥", "冯子强", "陈家庆",
+                "陈锡基", "苏子聪"];
 let currentStudent = "";
 let currentPage = 1;
 let totalScore = 0;
@@ -413,7 +418,7 @@ let usedImages = [];
 let startTime = 0;
 let imageCache = {};
 let timerInterval;
-let remainingTime = 8 * 60;
+let remainingTime = 10 * 60; // 10分钟倒计时
 
 function showZoomedImage() {
     const src = document.getElementById('question-image').src;
@@ -499,7 +504,7 @@ function startTest() {
     if (!currentStudent) return alert('请先选择学生');
     
     startTime = Date.now();
-    remainingTime = 8 * 60;
+    remainingTime = 10 * 60; // 重置为10分钟
     
     const allImages = Object.keys(questionBank);
     usedImages = [];
