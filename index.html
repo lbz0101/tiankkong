@@ -69,7 +69,6 @@
             transition: transform 0.3s;
         }
 
-        /* 图片放大模态框 */
         .image-modal {
             display: none;
             position: fixed;
@@ -124,12 +123,12 @@
         .blank-input {
             display: inline-block;
             margin: 0 5px;
-            min-width: 120px;
+            width: 90px;
             border: none;
             border-bottom: 2px solid #666;
             padding: 5px 10px;
             font-size: 16px;
-            text-align: center;
+            text-align: left;
             background-color: transparent;
         }
 
@@ -138,7 +137,6 @@
             font-size: 14px;
             margin-left: 10px;
             display: inline-block;
-            min-width: 100px;
         }
 
         #progress {
@@ -173,8 +171,8 @@
         #next-btn { background-color: #FF9800; color: white; display: none; }
         #finish-btn { background-color: #f44336; color: white; display: none; }
 
-        .correct { border-color: #4CAF50 !important; background-color: #e8f5e9 !important; }
-        .wrong { border-color: #f44336 !important; background-color: #ffebee !important; }
+        .correct { border-color: #666 !important; background-color: transparent !important; }
+        .wrong { border-color: #666 !important; background-color: transparent !important; }
 
         #result-page {
             text-align: center;
@@ -268,7 +266,6 @@
         </div>
     </div>
 
-    <!-- 图片放大模态框 -->
     <div class="image-modal" onclick="closeZoomedImage()">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -289,7 +286,7 @@
             <div class="ranking-item ranking-header">
                 <span>排名</span>
                 <span>姓名</span>
-                <span>正确率</span>
+                <span>总得分</span>
                 <span>用时</span>
             </div>
             <div id="ranking-list"></div>
@@ -377,8 +374,8 @@ let currentStudent = "";
 let currentPage = 1;
 let totalScore = 0;
 let usedImages = [];
+let startTime = 0;
 
-// 图片放大功能
 function showZoomedImage() {
     const src = document.getElementById('question-image').src;
     document.getElementById('zoomed-image').src = src;
@@ -407,6 +404,7 @@ function initHomepage() {
 function startTest() {
     currentStudent = document.getElementById('student-select').value;
     if (!currentStudent) return alert('请先选择学生');
+    startTime = Date.now();
     
     const allImages = Object.keys(questionBank);
     usedImages = [];
@@ -468,12 +466,10 @@ function checkAnswers() {
             const span = answerSpans[currentIndex];
             
             if (input.value.trim() === ans) {
-                input.classList.add('correct');
                 correctCount++;
                 span.textContent = '';
             } else {
-                input.classList.add('wrong');
-                span.textContent = `正确答案：${ans}`;
+                span.textContent = ans;
             }
             currentIndex++;
         });
@@ -498,11 +494,16 @@ function nextPage() {
 
 function showFinalResult() {
     const finalScore = totalScore + 1;
+    const timeUsed = Math.floor((Date.now() - startTime)/1000);
+    const minutes = Math.floor(timeUsed/60);
+    const seconds = timeUsed%60;
+    
     document.getElementById('container').style.display = 'none';
     document.getElementById('result-page').style.display = 'block';
     document.getElementById('total-score').innerHTML = `
         考生：${currentStudent}<br>
-        最终得分：<strong>${finalScore}</strong> 分
+        最终得分：<strong>${finalScore}</strong> 分<br>
+        用时：${minutes}分${seconds}秒
     `;
 }
 
@@ -520,7 +521,7 @@ function showRanking() {
         <div class="ranking-item">
             <span>${index + 1}</span>
             <span>${item.name}</span>
-            <span>${item.score}%</span>
+            <span>${item.score}分</span>
             <span>${item.time}</span>
         </div>
     `).join('');
