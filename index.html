@@ -48,7 +48,6 @@
             border: 1px solid #ddd;
             background-color: #f8f8f8;
             overflow: hidden;
-            touch-action: none;
         }
 
         .image-container {
@@ -66,36 +65,6 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            cursor: grab;
-            transition: transform 0.1s ease-out;
-            transform-origin: 0 0;
-        }
-
-        #question-image:active {
-            cursor: grabbing;
-        }
-
-        .zoom-controls {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 10;
-            background: rgba(255,255,255,0.8);
-            padding: 5px;
-            border-radius: 5px;
-            display: flex;
-            gap: 5px;
-        }
-
-        .zoom-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            border-radius: 50%;
-            background: #2196F3;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
         }
 
         .question-block {
@@ -161,7 +130,6 @@
 
         #enter-btn { background-color: #2196F3; color: white; }
         #rank-btn { background-color: #FF9800; color: white; }
-        #return-btn { background-color: #4CAF50; color: white; }
         #check-btn { background-color: #9C27B0; color: white; }
         #next-btn { background-color: #FF9800; color: white; display: none; }
         #finish-btn { background-color: #f44336; color: white; display: none; }
@@ -246,16 +214,10 @@
 
     <div id="container">
         <div id="progress">第1/3页</div>
-        <button id="return-btn" onclick="location.reload()">返回首页</button>
         
         <div class="image-viewer">
             <div class="image-container">
                 <img id="question-image" alt="题目图片">
-            </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomImage(1.2)">+</button>
-                <button class="zoom-btn" onclick="zoomImage(0.8)">-</button>
-                <button class="zoom-btn" onclick="resetZoom()">↻</button>
             </div>
         </div>
         
@@ -369,12 +331,6 @@ let currentPage = 1;
 let totalScore = 0;
 let usedImages = [];
 
-let scale = 1;
-let posX = 0;
-let posY = 0;
-let isDragging = false;
-let startX, startY;
-
 function initHomepage() {
     const select = document.getElementById('student-select');
     studentList.forEach(student => {
@@ -408,14 +364,7 @@ function startTest() {
 
 function loadNewPage() {
     const currentImage = usedImages[currentPage-1];
-    
-    scale = 1;
-    posX = 0;
-    posY = 0;
-    updateImageTransform();
-    
     const img = document.getElementById('question-image');
-    img.onload = function() { initDragAndZoom(); };
     img.src = `images/${currentImage}`;
     
     createQuestions(questionBank[currentImage]);
@@ -470,7 +419,7 @@ function checkAnswers() {
         });
     });
     
-    totalScore += correctCount * 3; // 每个正确答案3分
+    totalScore += correctCount * 3;
     document.getElementById('check-btn').style.display = 'none';
     
     if(currentPage < 3) {
@@ -488,124 +437,13 @@ function nextPage() {
 }
 
 function showFinalResult() {
-    const finalScore = totalScore + 1; // 完成答题加1分
+    const finalScore = totalScore + 1;
     document.getElementById('container').style.display = 'none';
     document.getElementById('result-page').style.display = 'block';
     document.getElementById('total-score').innerHTML = `
         考生：${currentStudent}<br>
         最终得分：<strong>${finalScore}</strong> 分
     `;
-}
-
-function initDragAndZoom() {
-    const img = document.getElementById('question-image');
-    const container = document.querySelector('.image-viewer');
-    
-    img.addEventListener('mousedown', startDrag);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
-    
-    img.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', endDrag);
-    
-    img.addEventListener('dblclick', function(e) {
-        e.preventDefault();
-        if(scale === 1) {
-            zoomImage(2, e.offsetX, e.offsetY);
-        } else {
-            resetZoom();
-        }
-    });
-    
-    container.addEventListener('wheel', function(e) {
-        e.preventDefault();
-        const delta = e.deltaY < 0 ? 1.1 : 0.9;
-        const rect = container.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-        zoomImage(delta, offsetX, offsetY);
-    }, { passive: false });
-}
-
-function startDrag(e) {
-    isDragging = true;
-    startX = e.clientX || e.touches[0].clientX;
-    startY = e.clientY || e.touches[0].clientY;
-    document.getElementById('question-image').style.cursor = 'grabbing';
-}
-
-function handleTouchStart(e) {
-    if (e.touches.length === 1) {
-        startDrag(e.touches[0]);
-    }
-}
-
-function drag(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const currentX = e.clientX || e.touches[0].clientX;
-    const currentY = e.clientY || e.touches[0].clientY;
-    
-    posX += (currentX - startX) / scale;
-    posY += (currentY - startY) / scale;
-    
-    startX = currentX;
-    startY = currentY;
-    
-    updateImageTransform();
-}
-
-function handleTouchMove(e) {
-    if (e.touches.length === 1) {
-        drag(e.touches[0]);
-    }
-}
-
-function endDrag() {
-    isDragging = false;
-    document.getElementById('question-image').style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-}
-
-function zoomImage(factor, centerX, centerY) {
-    const img = document.getElementById('question-image');
-    const container = document.querySelector('.image-viewer');
-    const containerRect = container.getBoundingClientRect();
-    
-    const oldScale = scale;
-    scale = Math.min(Math.max(scale * factor, 1), 5);
-    
-    if (centerX !== undefined && centerY !== undefined) {
-        const imgRect = img.getBoundingClientRect();
-        const relativeX = (centerX - imgRect.left) / oldScale;
-        const relativeY = (centerY - imgRect.top) / oldScale;
-        
-        posX -= (relativeX * (scale - oldScale)) / scale;
-        posY -= (relativeY * (scale - oldScale)) / scale;
-    }
-    
-    const maxPosX = (img.naturalWidth * scale - containerRect.width) / (2 * scale);
-    const maxPosY = (img.naturalHeight * scale - containerRect.height) / (2 * scale);
-    
-    posX = Math.max(Math.min(posX, maxPosX), -maxPosX);
-    posY = Math.max(Math.min(posY, maxPosY), -maxPosY);
-    
-    updateImageTransform();
-    document.getElementById('question-image').style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-}
-
-function resetZoom() {
-    scale = 1;
-    posX = 0;
-    posY = 0;
-    updateImageTransform();
-    document.getElementById('question-image').style.cursor = 'zoom-in';
-}
-
-function updateImageTransform() {
-    const img = document.getElementById('question-image');
-    img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
 }
 
 function showRanking() {
