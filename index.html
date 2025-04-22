@@ -46,6 +46,19 @@
             flex: 1;
             margin: 15px;
             overflow: auto;
+            position: relative;
+        }
+
+        #timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            z-index: 1000;
         }
 
         .image-viewer {
@@ -168,6 +181,15 @@
             border-radius: 8px;
         }
 
+        #password-input {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 10px 0;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+        }
+
         button {
             padding: 12px 40px;
             font-size: 18px;
@@ -255,6 +277,8 @@
             <option value="">请选择学生姓名</option>
         </select>
         <br>
+        <input type="password" id="password-input" placeholder="请输入密码">
+        <br>
         <button id="enter-btn">开始测评</button>
         <button id="rank-btn">排行榜</button>
         <div id="loading">正在加载图片，请稍候...</div>
@@ -262,6 +286,7 @@
 
     <div id="container">
         <div id="progress">第1/3页</div>
+        <div id="timer"></div>
         
         <div class="image-viewer">
             <div class="image-container" onclick="showZoomedImage()">
@@ -387,6 +412,8 @@ let totalScore = 0;
 let usedImages = [];
 let startTime = 0;
 let imageCache = {};
+let timerInterval;
+let remainingTime = 8 * 60;
 
 function showZoomedImage() {
     const src = document.getElementById('question-image').src;
@@ -399,6 +426,34 @@ function closeZoomedImage() {
 }
 
 document.querySelector('.close-modal').onclick = closeZoomedImage;
+
+function checkPassword() {
+    return document.getElementById('password-input').value === '2426';
+}
+
+function startTimer() {
+    const timerDisplay = document.getElementById('timer');
+    timerDisplay.style.display = 'block';
+    
+    function updateTimer() {
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            if (currentPage < 3) {
+                currentPage = 3;
+                loadNewPage();
+            }
+            showFinalResult();
+        }
+        remainingTime--;
+    }
+    
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
 
 function initHomepage() {
     const select = document.getElementById('student-select');
@@ -435,9 +490,16 @@ function preloadImages() {
 }
 
 function startTest() {
+    if (!checkPassword()) {
+        alert('密码错误！');
+        return;
+    }
+    
     currentStudent = document.getElementById('student-select').value;
     if (!currentStudent) return alert('请先选择学生');
+    
     startTime = Date.now();
+    remainingTime = 8 * 60;
     
     const allImages = Object.keys(questionBank);
     usedImages = [];
@@ -450,6 +512,7 @@ function startTest() {
     document.getElementById('container').style.display = 'block';
     currentPage = 1;
     totalScore = 0;
+    startTimer();
     loadNewPage();
 }
 
@@ -529,6 +592,9 @@ function nextPage() {
 }
 
 function showFinalResult() {
+    clearInterval(timerInterval);
+    document.getElementById('timer').style.display = 'none';
+    
     const finalScore = totalScore + 1;
     const timeUsed = Math.floor((Date.now() - startTime)/1000);
     const minutes = Math.floor(timeUsed/60);
@@ -572,6 +638,7 @@ function closeRanking() {
 window.onload = function() {
     initHomepage();
     preloadImages();
+    document.getElementById('timer').style.display = 'none';
 };
 </script>
 </body>
