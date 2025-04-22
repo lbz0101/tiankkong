@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
     <title>机械制图填空测评系统</title>
     <style>
         * {
@@ -16,7 +17,6 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            touch-action: none;
         }
 
         #homepage {
@@ -59,12 +59,51 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            cursor: pointer;
         }
 
         #question-image {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+            transition: transform 0.3s;
+        }
+
+        /* 图片放大模态框 */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #zoomed-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
         }
 
         .question-block {
@@ -216,7 +255,7 @@
         <div id="progress">第1/3页</div>
         
         <div class="image-viewer">
-            <div class="image-container">
+            <div class="image-container" onclick="showZoomedImage()">
                 <img id="question-image" alt="题目图片">
             </div>
         </div>
@@ -226,6 +265,14 @@
             <button id="check-btn" onclick="checkAnswers()">提交答案</button>
             <button id="next-btn" onclick="nextPage()">下一题</button>
             <button id="finish-btn" onclick="showFinalResult()">完成答题</button>
+        </div>
+    </div>
+
+    <!-- 图片放大模态框 -->
+    <div class="image-modal" onclick="closeZoomedImage()">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <img id="zoomed-image" src="" alt="放大图片">
         </div>
     </div>
 
@@ -330,6 +377,19 @@ let currentStudent = "";
 let currentPage = 1;
 let totalScore = 0;
 let usedImages = [];
+
+// 图片放大功能
+function showZoomedImage() {
+    const src = document.getElementById('question-image').src;
+    document.getElementById('zoomed-image').src = src;
+    document.querySelector('.image-modal').style.display = 'block';
+}
+
+function closeZoomedImage() {
+    document.querySelector('.image-modal').style.display = 'none';
+}
+
+document.querySelector('.close-modal').onclick = closeZoomedImage;
 
 function initHomepage() {
     const select = document.getElementById('student-select');
