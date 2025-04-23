@@ -2,37 +2,30 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
     <title>考证理论填空测评系统</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
         }
         body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: #f0f0f0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            touch-action: manipulation;
-            height: 100vh;
-            height: calc(var(--vh, 1vh) * 100);
         }
         #homepage {
-            flex: 1;
             background-color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: -webkit-fill-available;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            margin: auto;
         }
         #loading {
             display: none;
@@ -160,7 +153,7 @@
             margin: 15px 0;
         }
         #student-select {
-            width: 100%;
+            width: 80%;
             padding: 12px;
             font-size: 16px;
             margin: 20px 0;
@@ -168,7 +161,7 @@
             border-radius: 8px;
         }
         #password-input {
-            width: 100%;
+            width: 80%;
             padding: 12px;
             font-size: 16px;
             margin: 10px 0;
@@ -182,8 +175,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
-            margin: 10px 0;
-            width: 100%;
+            margin: 10px;
         }
         #enter-btn { background-color: #2196F3; color: white; }
         #rank-btn { background-color: #FF9800; color: white; }
@@ -194,7 +186,6 @@
             text-align: center;
             padding: 30px;
             display: none;
-            flex: 1;
         }
         #ranking-modal {
             display: none;
@@ -246,23 +237,6 @@
             flex-grow: 1;
             padding: 0 10px;
             margin: 10px 0;
-        }
-
-        @media (min-width: 768px) {
-            #homepage {
-                max-width: 500px;
-                margin: auto;
-                padding: 30px;
-                border-radius: 15px;
-                box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            }
-            button {
-                width: auto;
-                margin: 10px;
-            }
-            #student-select, #password-input {
-                width: 80%;
-            }
         }
     </style>
 </head>
@@ -326,17 +300,6 @@
     </div>
 
 <script>
-// 动态计算可视高度
-function adjustLayout() {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-    window.scrollTo(0, 0);
-}
-
-window.addEventListener('load', adjustLayout);
-window.addEventListener('resize', adjustLayout);
-window.addEventListener('orientationchange', adjustLayout);
-
 const scoreStorage = {
     getScores() {
         return JSON.parse(localStorage.getItem('examScores')) || [];
@@ -670,7 +633,6 @@ function showFinalResult() {
 }
 
 window.onload = function() {
-    adjustLayout();
     initHomepage();
     preloadImages();
     document.getElementById('timer').style.display = 'none';
