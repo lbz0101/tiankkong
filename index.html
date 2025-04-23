@@ -1,29 +1,22 @@
 <!DOCTYPE html>
-<html lang="zh-CN" style="height: 100%">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
     <title>考证理论填空测评系统</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
-            margin: 0;
-            padding: 0;
-        }
-        html {
-            height: 100%;
-            overflow: hidden;
         }
         body {
             font-family: Arial, sans-serif;
-            height: 100%;
             margin: 0;
             padding: 0;
             background-color: #f0f0f0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            touch-action: pan-y;
         }
         #homepage {
             background-color: white;
@@ -32,9 +25,7 @@
             box-shadow: 0 0 15px rgba(0,0,0,0.2);
             text-align: center;
             max-width: 500px;
-            width: 90%;
             margin: auto;
-            flex-shrink: 0;
         }
         #loading {
             display: none;
@@ -53,8 +44,6 @@
             margin: 15px;
             overflow: auto;
             position: relative;
-            width: calc(100% - 30px);
-            height: calc(100vh - 30px);
         }
         #timer {
             position: fixed;
@@ -197,8 +186,6 @@
             text-align: center;
             padding: 30px;
             display: none;
-            height: 100%;
-            overflow: auto;
         }
         #ranking-modal {
             display: none;
@@ -255,7 +242,7 @@
 </head>
 <body>
     <div id="homepage">
-        <h1 style="color: red;">由高州一职 Mr黎 制作</h1>
+        <h2 style="color: red;">由 高州一职 Mr黎 制作</h2>
         <select id="student-select">
             <option value="">请选择学生姓名</option>
         </select>
@@ -320,8 +307,13 @@ const scoreStorage = {
     saveScore(scoreData) {
         const scores = this.getScores();
         const existingIndex = scores.findIndex(s => s.name === scoreData.name);
-        if (existingIndex !== -1) scores.splice(existingIndex, 1);
-        scores.push(scoreData);
+        
+        if (existingIndex === -1) {
+            scores.push(scoreData);
+        } else if (scoreData.score > scores[existingIndex].score) {
+            scores[existingIndex] = scoreData;
+        }
+        
         localStorage.setItem('examScores', JSON.stringify(scores));
     }
 };
@@ -639,16 +631,6 @@ function showFinalResult() {
         用时：${Math.floor(timeUsed/60)}分${(timeUsed%60).toString().padStart(2, '0')}秒
     `;
 }
-
-// 视口高度适配
-document.addEventListener('DOMContentLoaded', function() {
-    const setHeight = () => {
-        let vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    setHeight();
-    window.addEventListener('resize', setHeight);
-});
 
 window.onload = function() {
     initHomepage();
