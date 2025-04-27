@@ -1,499 +1,642 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>考证理论在线测试（总分80）</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
+    <title>考证理论填空测评系统</title>
     <style>
-        #overlay {
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        #overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #startBtn {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1000;
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 20px;
-            transition: 0.3s;
-        }
-        #startBtn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .answered {
-            background: #e0f7fa !important;
-        }
-        .wrong-answer {
-            background: #ffebee !important;
-        }
-        .creator {
-            font-size: 20px;
-            color: #666;
-            text-align: center;
-            margin: 7px 3px 15px;
-        }
-        #scoreContainer {
-            position: sticky;
-            top: 8px;
-            float: right;
-            text-align: right;
-        }
-        #scoreDisplay {
-            background: #3498db;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 3px;
-            font-size: 36px !important;
-        }
-        #timeDisplay {
-            font-size: 20px !important;
-            color: #2c3e50;
-            background: #ecf0f1;
-            padding: 4px 8px;
-            border-radius: 3px;
-            margin-top: 5px;
+        * {
+            box-sizing: border-box;
+            user-select: none;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 15px;
-            background-color: #f5f5f5;
-            line-height: 1.1;
-            font-size: 16px;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 6px;
-            margin: 8px 0;
-            font-size: 1.8em;
-            text-align: center;
-        }
-        .question {
-            background: white;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            transition: background 0.3s;
-        }
-        .multiple-choice p {
-            font-size: 23px !important;
-        }
-        .multiple-choice label {
-            font-size: 23px !important;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            height: 100vh;
             display: flex;
+            flex-direction: column;
+        }
+        #homepage {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            margin: auto;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-top: 20px;
+        }
+        #container {
+            background-color: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            display: none;
+            flex: 1;
+            margin: 15px;
+            overflow: auto;
+            position: relative;
+        }
+        #timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+        .image-viewer {
+            position: relative;
+            height: 60vh;
+            min-height: 300px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            background-color: #f8f8f8;
+            overflow: hidden;
+        }
+        .image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        #question-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+        }
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
             align-items: center;
         }
-        img {
+        #zoomed-image {
             max-width: 100%;
-            height: auto;
-            margin: 4px 0;
-            border: 1px solid #ddd;
-            border-radius: 3px;
+            max-height: 100%;
+            object-fit: contain;
         }
-        .options-row {
-            display: flex;
-            gap: 25px;
-            margin-top: 6px;
-        }
-        .fill-group {
-            position: relative;
-            margin: 0 4px;
-            display: inline-block;
-        }
-        .fill-line {
-            border: none;
-            border-bottom: 2px solid #333;
-            width: 90px;
-            padding: 1px 0;
-            background: transparent;
-            transition: all 0.3s;
-        }
-        .fill-line.correct {
-            border-color: #27ae60;
-            background: #e8f5e9;
-        }
-        .fill-line.wrong {
-            border-color: #e74c3c;
-        }
-        .answer-hint {
+        .close-modal {
             position: absolute;
-            top: -16px;
-            left: 0;
-            color: #e74c3c;
-            font-size: 0.7em;
-            white-space: nowrap;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        .question-block {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .question-number {
+            font-size: 20px;
+            color: #FF9800;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .blank-input {
+            display: block;
+            margin: 0 5px;
+            width: 120px;
+            border: none;
+            border-bottom: 2px solid #666;
+            padding: 5px 10px;
+            font-size: 16px;
+            text-align: left;
+            background-color: transparent;
+        }
+        .correct {
+            background-color: rgba(76, 175, 80, 0.1) !important;
+        }
+        .correct-answer {
+            color: #f44336;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+            height: 18px;
+        }
+        #progress {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin: 15px 0;
+        }
+        #student-select {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 20px 0;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+        }
+        #password-input {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 10px 0;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
         }
         button {
-            display: block;
-            margin: 15px auto;
-            background: #3498db;
-            color: white;
+            padding: 12px 40px;
+            font-size: 18px;
             border: none;
-            padding: 16px 32px;
-            border-radius: 3px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 30px;
             transition: all 0.3s;
+            margin: 10px;
         }
-        button:hover {
-            background: #2980b9;
+        #enter-btn { background-color: #2196F3; color: white; }
+        #rank-btn { background-color: #FF9800; color: white; }
+        #check-btn { background-color: #9C27B0; color: white; }
+        #next-btn { background-color: #FF9800; color: white; display: none; }
+        #finish-btn { background-color: #f44336; color: white; display: none; }
+        #result-page {
+            text-align: center;
+            padding: 30px;
+            display: none;
         }
-        .correct-mark {
-            color: #27ae60;
-            margin-left: 4px;
+        #ranking-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
         }
-        .wrong-mark {
-            color: #e74c3c;
-            margin-left: 4px;
+        .ranking-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            margin: 30px auto;
+            position: relative;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
         }
-        input[type="radio"] {
-            margin-right: 8px;
-            width: 23px;
-            height: 23px;
-            border: 2px solid #ccc;
-            border-radius: 50%;
-            appearance: none;
-            outline: none;
-            transition: all 0.3s;
-            vertical-align: middle;
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
         }
-        input[type="radio"]:checked {
-            border-color: #FFA500;
-            background: #FFA50033;
-            box-shadow: 0 0 0 2px #FFA500;
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 8px;
         }
-        label {
-            display: block;
+        .ranking-header {
+            font-weight: bold;
+            background-color: #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        #ranking-list {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 0 10px;
             margin: 10px 0;
-            padding: 2px;
-            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <button id="startBtn" disabled onclick="handleStart()">开始答题</button>
-    
-    <div id="overlay">
-        <h1>理论真题测试（删减作图题20分）
-            <div class="creator">(由 高州一职Mr黎 制作)</div>
-            <div id="scoreContainer">
-                <div id="scoreDisplay"></div>
-                <div id="timeDisplay"></div>
-            </div>
-        </h1>
-        <div id="questions"></div>
-        <button onclick="handleSubmit()" id="submitBtn">提交试卷</button>
+    <div id="homepage">
+        <h2 style="color: red;">由 高州一职 Mr黎 制作</h2>
+        <select id="student-select">
+            <option value="">请选择学生姓名</option>
+        </select>
+        <br>
+        <input type="password" id="password-input" placeholder="请输入密码">
+        <br>
+<button id="enter-btn" style="padding: 8px 10px; font-size: 15px;">开始测评</button>
+<button id="rank-btn" style="padding: 8px 10px; font-size: 15px;">排行榜（维护中）</button>
+        <div id="loading">正在加载图片，请稍候...</div>
     </div>
 
-    <script src="questions.js"></script>
-    <script src="questions1.js"></script>
-    <script>
-        // 全局错误监控
-        window.onerror = function(message, source, lineno) {
-            console.log('JS Error:' + message + ' at ' + lineno + '行');
-        };
+    <div id="container">
+        <div id="progress">第1/3页</div>
+        <div id="timer"></div>
+        
+        <div class="image-viewer">
+            <div class="image-container" onclick="showZoomedImage()">
+                <img id="question-image" alt="题目图片">
+            </div>
+        </div>
+        
+        <div id="questions-container"></div>
+        <div style="text-align:center;">
+            <button id="check-btn" onclick="checkAnswers()">提交答案</button>
+            <button id="next-btn" onclick="nextPage()">下一题</button>
+            <button id="finish-btn" onclick="showFinalResult()">完成答题</button>
+        </div>
+    </div>
 
-        // 初始化启用开始按钮
-        window.addEventListener('load', function() {
-            document.getElementById('startBtn').disabled = false;
-        });
+    <div class="image-modal" onclick="closeZoomedImage()">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <img id="zoomed-image" src="" alt="放大图片">
+        </div>
+    </div>
 
-        var startTime;
-        var categories = {
-            '材料': [], '螺纹': [], '传动': [],
-            '齿轮': [], '轴承': [], '制图': []
-        };
+    <div id="result-page">
+        <h2>测评结果</h2>
+        <p id="total-score" style="font-size:24px; color:#2196F3;"></p>
+        <button onclick="location.reload()">返回首页</button>
+    </div>
 
-        // 初始化题目分类
-        for (var i = 0; i < questions.length; i++) {
-            var q = questions[i];
-            for (var j = 0; j < q.categories.length; j++) {
-                var cat = q.categories[j];
-                if (categories[cat]) {
-                    categories[cat].push(q);
-                }
-            }
+    <div id="ranking-modal">
+        <div class="ranking-content">
+            <span class="close-btn" onclick="closeRanking()">&times;</span>
+            <h2 style="text-align:center; color:#FF9800; margin:10px 0 20px;">学生排行榜</h2>
+            <div class="ranking-item ranking-header">
+                <span>排名</span>
+                <span>姓名</span>
+                <span>总得分</span>
+                <span>用时</span>
+            </div>
+            <div id="ranking-list"></div>
+        </div>
+    </div>
+
+<script>
+const scoreStorage = {
+    getScores() {
+        return JSON.parse(localStorage.getItem('examScores')) || [];
+    },
+    saveScore(scoreData) {
+        const scores = this.getScores();
+        const existingIndex = scores.findIndex(s => s.name === scoreData.name);
+        
+        if (existingIndex === -1) {
+            scores.push(scoreData);
+        } else if (scoreData.score > scores[existingIndex].score) {
+            scores[existingIndex] = scoreData;
         }
+        
+        localStorage.setItem('examScores', JSON.stringify(scores));
+    }
+};
 
-        // 开始考试
-        function handleStart() {
-            var password = prompt("请输入考试密码：");
-            if (password === "2426") {
-                document.getElementById("overlay").className += ' visible';
-                document.getElementById("startBtn").style.display = "none";
-                startTime = new Date();
-                generateExam();
+const questionBank = {
+    "1.jpg": [
+        { answers: ["单燕尾滑块座", "45", "1：2"] },
+        { answers: ["左视图", "俯视图", "一"] },
+        { answers: ["0.021", "10.036"] },
+        { answers: ["2", "18"] },
+        { answers: ["4", "12.5"] },
+        { answers: ["对称度", "0.05", "B"] }
+    ],
+    "2.jpg": [
+        { answers: ["阀盖", "HT150", "1:1"] },
+        { answers: ["2", "主", "左", "全剖视图"] },
+        { answers: ["垂直度", "Φ35孔的轴线", "0.02", "B"] },
+        { answers: ["35", "35", "34.075", "0.025"] }
+    ],
+    "3.jpg": [
+        { answers: ["皮带轮", "HT150", "1：1"] },
+        { answers: ["2", "全"] },
+        { answers: ["30.03", "30", "0.03"] },
+        { answers: ["圆跳动", "0.03", "A"] },
+        { answers: ["3.2", "6.3"] },
+        { answers: ["8", "3.3"] }
+    ],
+    "4.jpg": [
+        { answers: ["从动轴", "40Cr", "1：1"] },
+        { answers: ["60.021", "60.002", "0.019"] },
+        { answers: ["39", "12.5"] },
+        { answers: ["圆跳动", "0.015", "A-B"] },
+        { answers: ["调质", "245-265HBS"] },
+        { answers: ["14", "5.5"] }
+    ],
+    "5.jpg": [
+        { answers: ["机座", "1：2"] },
+        { answers: ["45", "调质"] },
+        { answers: ["局部"] },
+        { answers: ["0.046", "68.056", "68.01"] },
+        { answers: ["Φ13", "6"] },
+        { answers: ["8", "6.3"] },
+        { answers: ["垂直度", "0.06", "A"] }
+    ],
+    "6.jpg": [
+        { answers: ["夹头", "45", "1：1"] },
+        { answers: ["2", "半", "局部"] },
+        { answers: ["60.05", "59.95", "0.1"] },
+        { answers: ["垂直度", "Φ0.08", "A"] },
+        { answers: ["1.6", "6.3"] },
+        { answers: ["时效处理"] }
+    ],
+    "7.jpg": [
+        { answers: ["端盖", "HT150", "1：1"] },
+        { answers: ["2", "主", "左", "旋转"] },
+        { answers: ["垂直度", "0.02", "A"] },
+        { answers: ["16", "16.018", "16", "16.018"] },
+        { answers: ["1.6"] }
+    ],
+    "8.jpg": [
+        { answers: ["夹具体", "1：2"] },
+        { answers: ["HT150"] },
+        { answers: ["局部"] },
+        { answers: ["100", "72"] },
+        { answers: ["0.05", "62.025", "61.075"] },
+        { answers: ["2", "15"] },
+        { answers: ["6.3"] },
+        { answers: ["垂直度", "Φ0.03", "A"] }
+    ],
+    "9.jpg": [
+        { answers: ["2", "旋转", "1：1"] },
+        { answers: ["支座", "HT200"] },
+        { answers: ["1.6", "25"] },
+        { answers: ["垂直度", "Φ65孔的轴线", "B", "Φ0.01"] },
+        { answers: ["左端面"] },
+        { answers: ["65", "65.030", "65"] }
+    ]
+};
+
+const studentList = ["第一组", "第二组","第三组","第四组","邱日强","黄火明", "杨名驰", "朱立乾", "邱耀铭", "葛金鹏", "梁皓轩",
+                "郭恩瑞", "程剑豪", "罗远昊", "江柏冠", "卢宝增", "邓镇权", "黄庆飞",
+                "谢泽高", "冯麟斌", "卢子豪", "张超城", "黄析俊", "黄永霖", "李鼎",
+                "邓鸿镇", "黄培轩", "彭家乐", "黄新铧", "谢国永", "曾俊烽", "杨永建",
+                "陈继贤", "刘金灿", "袁乐清", "朱冠帆", "张广隆", "梁国亮", "梁燕辰",
+                "陈江南", "林浩宇", "蔡伟杰", "林松海", "吕仁才", "韦悦", "石江涛",
+                "宁颢然", "刘付煜毅", "梁志鑫", "赖兆霆", "张梓钥", "冯子强", "陈家庆",
+                "陈锡基", "苏子聪"];
+
+let currentStudent = "";
+let currentPage = 1;
+let totalScore = 0;
+let usedImages = [];
+let startTime = 0;
+let imageCache = {};
+let timerInterval;
+let remainingTime = 600;
+
+function showZoomedImage() {
+    const src = document.getElementById('question-image').src;
+    document.getElementById('zoomed-image').src = src;
+    document.querySelector('.image-modal').style.display = 'block';
+}
+
+function closeZoomedImage() {
+    document.querySelector('.image-modal').style.display = 'none';
+}
+
+document.querySelector('.close-modal').onclick = closeZoomedImage;
+
+function checkPassword() {
+    return document.getElementById('password-input').value === '2426';
+}
+
+function startTimer() {
+    const timerDisplay = document.getElementById('timer');
+    timerDisplay.style.display = 'block';
+    
+    function updateTimer() {
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            showFinalResult();
+        }
+        remainingTime--;
+    }
+    
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function initHomepage() {
+    const select = document.getElementById('student-select');
+    studentList.forEach(student => {
+        const option = document.createElement('option');
+        option.value = student;
+        option.textContent = student;
+        select.appendChild(option);
+    });
+
+    document.getElementById('enter-btn').addEventListener('click', startTest);
+    document.getElementById('rank-btn').addEventListener('click', showRanking);
+}
+
+function preloadImages() {
+    document.getElementById('enter-btn').disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    
+    const imageNames = Object.keys(questionBank);
+    let loadedCount = 0;
+    
+    imageNames.forEach(imageName => {
+        const img = new Image();
+        img.onload = function() {
+            imageCache[imageName] = img;
+            loadedCount++;
+            if(loadedCount === imageNames.length) {
+                document.getElementById('enter-btn').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        };
+        img.src = `images/${imageName}`;
+    });
+}
+
+function startTest() {
+    if (!checkPassword()) {
+        alert('密码错误！');
+        return;
+    }
+    
+    currentStudent = document.getElementById('student-select').value;
+    if (!currentStudent) return alert('请先选择学生');
+    
+    startTime = Date.now();
+    remainingTime = 600;
+    
+    const allImages = Object.keys(questionBank);
+    usedImages = [];
+    while(usedImages.length < 3) {
+        const randomImage = allImages[Math.floor(Math.random() * allImages.length)];
+        if(!usedImages.includes(randomImage)) usedImages.push(randomImage);
+    }
+
+    document.getElementById('homepage').style.display = 'none';
+    document.getElementById('container').style.display = 'block';
+    currentPage = 1;
+    totalScore = 0;
+    startTimer();
+    loadNewPage();
+}
+
+function loadNewPage() {
+    const currentImage = usedImages[currentPage-1];
+    const img = document.getElementById('question-image');
+    img.src = imageCache[currentImage].src;
+    
+    createQuestions(questionBank[currentImage]);
+    document.getElementById('progress').textContent = `第${currentPage}/3页`;
+    document.getElementById('check-btn').style.display = 'block';
+    document.getElementById('next-btn').style.display = 'none';
+    document.getElementById('finish-btn').style.display = 'none';
+}
+
+function createQuestions(questions) {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+    
+    questions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-block';
+        questionDiv.innerHTML = `
+            <div class="question-number">（${index + 1}）</div>
+            ${q.answers.map(() => `
+                <div style="display: inline-block; vertical-align: top;">
+                    <span class="correct-answer"></span>
+                    <input type="text" class="blank-input">
+                </div>
+            `).join(' ')}
+        `;
+        container.appendChild(questionDiv);
+    });
+}
+
+function checkAnswers() {
+    const questions = questionBank[usedImages[currentPage-1]];
+    const inputs = document.querySelectorAll('.blank-input');
+    const answerSpans = document.querySelectorAll('.correct-answer');
+    
+    let correctCount = 0;
+    let currentIndex = 0;
+    
+    questions.forEach((q, qIndex) => {
+        q.answers.forEach((ans, aIndex) => {
+            const input = inputs[currentIndex];
+            const span = answerSpans[currentIndex];
+            
+            if (input.value.trim() === ans) {
+                input.classList.add('correct');
+                correctCount++;
+                span.textContent = '';
             } else {
-                alert("密码错误！");
+                input.classList.remove('correct');
+                span.textContent = ans;
+                span.style.color = '#f44336';
             }
-        }
-
-        // 监听选项变化
-        document.addEventListener('change', function(e) {
-            if (e.target.type === 'radio') {
-                var questionDiv = e.target.closest('.question');
-                if (questionDiv) {
-                    questionDiv.className += ' answered';
-                }
-            }
+            currentIndex++;
         });
+    });
+    
+    totalScore += correctCount * 3;
+    document.getElementById('check-btn').style.display = 'none';
+    
+    if(currentPage < 3) {
+        document.getElementById('next-btn').style.display = 'inline-block';
+    } else {
+        document.getElementById('finish-btn').style.display = 'inline-block';
+    }
+}
 
-        // 计算考试用时
-        function calculateDuration() {
-            var endTime = new Date();
-            var duration = Math.floor((endTime - startTime) / 1000);
-            var minutes = Math.floor(duration / 60).toString().padStart(2, '0');
-            var seconds = (duration % 60).toString().padStart(2, '0');
-            return minutes + '分' + seconds + '秒';
-        }
+function nextPage() {
+    currentPage++;
+    if(currentPage <= 3) {
+        loadNewPage();
+    }
+}
 
-        // 生成试卷
-        function generateExam() {
-            var container = document.getElementById('questions');
-            container.innerHTML = '';
+function showRanking() {
+    const scores = scoreStorage.getScores()
+        .sort((a, b) => b.score - a.score || a.time - b.time);
 
-            // 组合各分类题目
-            var selectedQuestions = []
-                .concat(getRandomQuestions(categories.材料, 2))
-                .concat(getRandomQuestions(categories.螺纹, 2))
-                .concat(getRandomQuestions(categories.传动, 5))
-                .concat(getRandomQuestions(categories.齿轮, 3))
-                .concat(getRandomQuestions(categories.轴承, 2))
-                .concat(getRandomQuestions(categories.制图, 4));
+    const list = document.getElementById('ranking-list');
+    if (scores.length === 0) {
+        list.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">暂无考试记录</div>`;
+        return;
+    }
 
-            // 添加选择题
-            for (var i = 0; i < selectedQuestions.length; i++) {
-                container.appendChild(createQuestionElement(selectedQuestions[i], i + 1));
-            }
+    list.innerHTML = scores.map((item, index) => {
+        const minutes = Math.floor(item.time / 60);
+        const seconds = item.time % 60;
+        return `
+        <div class="ranking-item">
+            <span>${index + 1}</span>
+            <span>${item.name}</span>
+            <span>${item.score}分</span>
+            <span>${minutes}分${seconds.toString().padStart(2, '0')}秒</span>
+        </div>`;
+    }).join('');
+    
+    document.getElementById('ranking-modal').style.display = 'block';
+}
 
-            // 添加图片题
-            var imgAnswers = 'ACBDBAADBCADBACCADCBBBCCADAAABBACDBDABCACCBBAABADDABACABCAAABBCAAA';
-            var indices = getRandomIndices(66, 7);
-            for (var i = 0; i < indices.length; i++) {
-                container.appendChild(createImageQuestion(indices[i], imgAnswers[indices[i]], container.children.length + 1));
-            }
+function closeRanking() {
+    document.getElementById('ranking-modal').style.display = 'none';
+}
 
-            // 添加填空题
-            var fillKey = getRandomKey(questionBank);
-            container.appendChild(createFillQuestion(fillKey, container.children.length + 1));
-        }
+function showFinalResult() {
+    clearInterval(timerInterval);
+    document.getElementById('timer').style.display = 'none';
+    
+    const timeUsed = Math.floor((Date.now() - startTime)/1000);
+    scoreStorage.saveScore({
+        name: currentStudent,
+        score: totalScore,
+        time: timeUsed
+    });
 
-        // 创建选择题元素
-        function createQuestionElement(question, number) {
-            var div = document.createElement('div');
-            div.className = 'question multiple-choice';
-            var html = '<p>' + number + '. ' + question.question + '</p>';
-            for (var k = 0; k < question.options.length; k++) {
-                var opt = question.options[k];
-                html += '<label><input type="radio" name="q' + number + '" value="' + opt[0] + '">' + opt + '</label>';
-            }
-            div.innerHTML = html;
-            div.setAttribute('data-correct', question.correct);
-            return div;
-        }
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('result-page').style.display = 'block';
+    document.getElementById('total-score').innerHTML = `
+        考生：${currentStudent}<br>
+        最终得分：<strong>${totalScore}</strong> 分<br>
+        用时：${Math.floor(timeUsed/60)}分${(timeUsed%60).toString().padStart(2, '0')}秒
+    `;
+}
 
-        // 创建图片题元素
-        function createImageQuestion(imgIndex, correctAnswer, number) {
-            var div = document.createElement('div');
-            div.className = 'question multiple-choice';
-            div.innerHTML = '<p>' + number + '. <img src="images/' + imgIndex + '.jpg" onerror="this.style.display=\'none\'"></p>' +
-                '<div class="options-row">' +
-                '<label><input type="radio" name="img' + number + '" value="A">A</label>' +
-                '<label><input type="radio" name="img' + number + '" value="B">B</label>' +
-                '<label><input type="radio" name="img' + number + '" value="C">C</label>' +
-                '<label><input type="radio" name="img' + number + '" value="D">D</label>' +
-                '</div>';
-            div.setAttribute('data-correct', correctAnswer);
-            return div;
-        }
-
-        // 创建填空题元素（关键修改）
-        function createFillQuestion(key, number) {
-            if (!questionBank[key]) {
-                console.error('无效的填空题key:', key);
-                return document.createElement('div');
-            }
-
-            var div = document.createElement('div');
-            div.className = 'question fill-question';
-            div.innerHTML = '<p>' + number + '. <img src="images1/' + key + '" onerror="this.style.display=\'none\'"></p><div class="fill-answers"></div>';
-
-            var answersContainer = div.querySelector('.fill-answers');
-            var items = questionBank[key];
-            
-            for (var i = 0; i < items.length; i++) {
-                var qDiv = document.createElement('div');
-                qDiv.innerHTML = '<p>（' + (i + 1) + '）</p>';
-                var answers = items[i].answers;
-                
-                for (var j = 0; j < answers.length; j++) {
-                    var group = document.createElement('div');
-                    group.className = 'fill-group';
-                    group.innerHTML = '<input type="text" class="fill-line"><div class="hint-container"></div>';
-                    qDiv.appendChild(group);
-                }
-                
-                qDiv.setAttribute('data-answers', JSON.stringify(answers));
-                answersContainer.appendChild(qDiv);
-            }
-
-            return div;
-        }
-
-        // 检查是否全部作答
-        function checkAllAnswered() {
-            var radioGroups = document.querySelectorAll('.multiple-choice');
-            var allRadioAnswered = true;
-            for (var i = 0; i < radioGroups.length; i++) {
-                if (!radioGroups[i].querySelector('input:checked')) {
-                    allRadioAnswered = false;
-                    break;
-                }
-            }
-
-            var fillInputs = document.querySelectorAll('.fill-line');
-            var allFillAnswered = true;
-            for (var i = 0; i < fillInputs.length; i++) {
-                if (fillInputs[i].value.trim() === '') {
-                    allFillAnswered = false;
-                    break;
-                }
-            }
-
-            return allRadioAnswered && allFillAnswered;
-        }
-
-        // 提交试卷
-        function handleSubmit() {
-            if (!checkAllAnswered()) {
-                alert("你还有题目未作答，请继续答题！");
-                return;
-            }
-
-            document.getElementById('timeDisplay').textContent = '用时：' + calculateDuration();
-            
-            var btn = document.getElementById('submitBtn');
-            btn.onclick = function() { location.reload(); };
-            btn.textContent = '重新测试';
-
-            var allInputs = document.querySelectorAll('input');
-            for (var i = 0; i < allInputs.length; i++) {
-                allInputs[i].disabled = true;
-            }
-
-            var totalScore = 0;
-
-            // 批改选择题
-            var choiceQuestions = document.querySelectorAll('.multiple-choice');
-            for (var i = 0; i < choiceQuestions.length; i++) {
-                var question = choiceQuestions[i];
-                var correctAnswer = question.getAttribute('data-correct');
-                var selected = question.querySelector('input:checked');
-
-                if (selected && selected.value !== correctAnswer) {
-                    question.className += ' wrong-answer';
-                }
-
-                if (correctAnswer) {
-                    var correctOption = question.querySelector('input[value="' + correctAnswer + '"]');
-                    
-                    if (selected && selected.value === correctAnswer) {
-                        totalScore += 2;
-                        var mark = document.createElement('span');
-                        mark.className = 'correct-mark';
-                        mark.textContent = '✓';
-                        selected.parentElement.appendChild(mark);
-                    } else {
-                        if (selected) {
-                            var mark = document.createElement('span');
-                            mark.className = 'wrong-mark';
-                            mark.textContent = '✗';
-                            selected.parentElement.appendChild(mark);
-                        }
-                        var correctMark = document.createElement('span');
-                        correctMark.className = 'correct-mark';
-                        correctMark.textContent = '(' + correctOption.parentElement.textContent.trim() + ')';
-                        question.appendChild(correctMark);
-                    }
-                }
-            }
-
-            // 批改填空题
-            var fillGroups = document.querySelectorAll('.fill-group');
-            for (var i = 0; i < fillGroups.length; i++) {
-                var group = fillGroups[i];
-                var input = group.querySelector('input');
-                var groupContainer = group.closest('div[data-answers]');
-                if (!groupContainer) continue;
-                
-                var answers = JSON.parse(groupContainer.getAttribute('data-answers'));
-                var groupIndex = Array.from(groupContainer.querySelectorAll('.fill-group')).indexOf(group);
-                
-                if (groupIndex !== -1 && groupIndex < answers.length) {
-                    var correctAnswer = answers[groupIndex];
-                    
-                    if (input.value.trim() === correctAnswer) {
-                        totalScore += 2;
-                        input.className += ' correct';
-                    } else {
-                        input.className += ' wrong';
-                        var hint = document.createElement('div');
-                        hint.className = 'answer-hint';
-                        hint.textContent = correctAnswer;
-                        group.querySelector('.hint-container').appendChild(hint);
-                    }
-                }
-            }
-
-            document.getElementById('scoreDisplay').textContent = '总分：' + totalScore + '分';
-            window.scrollTo(0, 0);
-        }
-
-        // 工具函数：随机选题
-        function getRandomQuestions(arr, count) {
-            var copy = arr.slice();
-            for (var i = copy.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = copy[i];
-                copy[i] = copy[j];
-                copy[j] = temp;
-            }
-            return copy.slice(0, count);
-        }
-
-        // 工具函数：生成随机索引
-        function getRandomIndices(max, count) {
-            var indices = [];
-            for (var i = 0; i < max; i++) indices.push(i);
-            for (var i = indices.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = indices[i];
-                indices[i] = indices[j];
-                indices[j] = temp;
-            }
-            return indices.slice(0, count);
-        }
-
-        // 工具函数：随机获取填空题key
-        function getRandomKey(obj) {
-            var keys = Object.keys(obj);
-            return keys[Math.floor(Math.random() * keys.length)];
-        }
-    </script>
+window.onload = function() {
+    initHomepage();
+    preloadImages();
+    document.getElementById('timer').style.display = 'none';
+};
+</script>
 </body>
 </html>
